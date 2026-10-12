@@ -17,7 +17,7 @@ library(lubridate)
 library(openxlsx)
 
 # Load data
-obs <- read.xlsx("data/all_species_data_solartime.xlsx") %>%
+obs <- read.xlsx("Data/all_species_data_solartime.xlsx") %>%
   droplevels() %>% 
   mutate(
     Date = as.Date(Date, origin = "1899-12-30"),
@@ -189,6 +189,23 @@ mod_native_1680 <- chmTMB(
   data = dat_veado_comp
 )
 
+# Native vegetation (1680 m scale) and fragments (2120 m scale)
+mod_native_1680_fragments_2120 <- chmTMB(
+  cbind(success, failure) ~
+    time * native_1680 + enn_mn_2120 +
+    (1 | cluster) +
+    (1 | locationName),
+  data = dat_veado_comp
+)
+
+# Native vegetation (1680 m scale) and ndvi (1680 m scale)
+mod_native_1680_ndvi_1680 <- chmTMB(
+  cbind(success, failure) ~
+    time * native_1680 + ndvi_mean_1680 +
+  (1 | cluster) +
+    (1 | locationName),
+  data = dat_veado_comp
+)
 # Distance between fragments (2120 m scale)
 mod_fragments_2120 <- chmTMB(
   cbind(success, failure) ~
@@ -207,6 +224,15 @@ mod_ndvi_1680 <- chmTMB(
   data = dat_veado_comp
 )
 
+# Distance between fragments (2120 m scale) and ndvi (1680 m scale)
+mod_fragments_2120_ndvi_1680 <- chmTMB(
+  cbind(success, failure) ~
+    time * enn_mn_2120 + ndvi_mean_1680 +
+    (1 | cluster) +
+    (1 | locationName),
+  data = dat_veado_comp
+)
+
 
 # ============================================================
 # CHECK MODEL CONVERGENCE
@@ -215,10 +241,12 @@ mod_ndvi_1680 <- chmTMB(
 c(
   null = mod_null$sdr$pdHess,
   native_1680 = mod_native_1680$sdr$pdHess,
-  enn_mn_2120 = mod_fragments_2120$sdr$pdHess,
-  ndvi_mean_1680 = mod_ndvi_1680$sdr$pdHess
+  native_1680_fragments_2120 = mod_native_1680_fragments_2120$sdr$pdHess,
+  native_1680_ndvi_1680 = mod_native_1680_ndvi_1680$sdr$pdHess,
+  fragments_2120 = mod_fragments_2120$sdr$pdHess,
+  ndvi_1680 = mod_ndvi_1680$sdr$pdHess,
+  fragments_2120_ndvi_1680 = mod_fragments_2120_ndvi_1680$sdr$pdHess
 )
-
 
 # ============================================================
 # MODEL SELECTION BASED ON AIC
@@ -227,8 +255,11 @@ c(
 tab_aic <- AIC(
   mod_null,
   mod_native_1680,
+  mod_native_1680_fragments_2120,
+  mod_native_1680_ndvi_1680,
   mod_fragments_2120,
-  mod_ndvi_1680
+  mod_ndvi_1680,
+  mod_fragments_2120_ndvi_1680
 ) %>%
   mutate(
     dAIC = AIC - min(AIC, na.rm = TRUE)
