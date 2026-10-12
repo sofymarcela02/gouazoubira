@@ -19,7 +19,7 @@ library(lubridate)
 library(openxlsx)
 
 # Load data
-obs <- read.xlsx("data/all_species_data_solartime.xlsx") %>%
+obs <- read.xlsx("Data/all_species_data_solartime.xlsx") %>%
   droplevels() %>% 
   mutate(
     Date = as.Date(Date, origin = "1899-12-30"),
